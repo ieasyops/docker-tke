@@ -1,0 +1,11 @@
+{
+  "secure_serving": {
+    "tls_cert_file": "/etc/certificates/localhost+8.pem",
+    "tls_private_key_file": "/etc/certificates/localhost+8-key.pem"
+  },
+  "client": {
+    "notify": {
+      "api_server_client_config": "/etc/notify-api-client-config.yaml"
+    }
+  }
+}

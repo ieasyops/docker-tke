@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Config
+clusters:
+  - name: tke
+    cluster:
+      certificate-authority: /etc/ca/mkcert/rootCA.pem
+      server: http://tke_tkeauthapi:9451
+users:
+  - name: admin
+    user:
+      token: token
+current-context: tke
+contexts:
+  - context:
+      cluster: tke
+      user: admin
+    name: tke

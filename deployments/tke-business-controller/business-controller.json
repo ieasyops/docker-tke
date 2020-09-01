@@ -1,0 +1,14 @@
+{
+  "secure_serving": {
+    "tls_cert_file": "/etc/certificates/localhost+8.pem",
+    "tls_private_key_file": "/etc/certificates/localhost+8-key.pem"
+  },
+  "client": {
+    "platform": {
+      "api_server_client_config": "/etc/tkebusinesscontroller/platform-api-client-config.yaml"
+    },
+    "business": {
+      "api_server_client_config": "/etc/tkebusinesscontroller/business-api-client-config.yaml"
+    }
+  }
+}

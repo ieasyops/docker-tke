@@ -1,0 +1,31 @@
+{
+  "authentication": {
+    "oidc": {
+      "client_id": "client",
+      "issuer_url": "https://tke_tkeauthapi:9451/oidc",
+      "ca_file": "/etc/ca/mkcert/rootCA.pem",
+      "username_prefix": "-",
+      "username_claim": "name",
+      "tenantid_claim": "federated_claims"
+    },
+    "requestheader": {
+      "username_headers": "X-Remote-User",
+      "group_headers": "X-Remote-Groups",
+      "extra_headers_prefix": "X-Remote-Extra-",
+      "client_ca_file": "/etc/ca/mkcert/rootCA.pem"
+    },
+    "token_auth_file": "/etc/token.csv"
+  },
+  "secure_serving": {
+    "tls_cert_file": "/etc/certificates/localhost+8.pem",
+    "tls_private_key_file": "/etc/certificates/localhost+8-key.pem"
+  },
+  "etcd": {
+    "servers": ["http://tke_etcd1:2379"]
+  },
+  "client": {
+    "platform": {
+      "api_server_client_config": "/etc/platform-api-client-config.yaml"
+    }
+  }
+}

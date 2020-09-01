@@ -1,0 +1,6 @@
+apiVersion: monitor.config.tkestack.io/v1
+kind: MonitorConfiguration
+storage:
+  influxDB:
+    servers:
+      - address: http://tke_monitor_data:8086

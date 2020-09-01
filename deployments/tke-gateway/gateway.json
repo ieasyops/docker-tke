@@ -1,0 +1,18 @@
+{
+  "authentication": {
+    "oidc": {
+      "client_secret": "secret",
+      "client_id": "client",
+      "issuer_url": "https://tkeauthapi:9451/oidc",
+      "ca_file": "/etc/ca/mkcert/rootCA.pem",
+      "username_prefix": "-",
+      "username_claim": "name",
+      "tenantid_claim": "federated_claims"
+    }
+  },
+  "secure_serving": {
+    "tls_cert_file": "/etc/certificates/localhost+8.pem",
+    "tls_private_key_file": "/etc/certificates/localhost+8-key.pem"
+  },
+  "gateway_config": "/etc/gateway/gateway-config.yaml"
+}

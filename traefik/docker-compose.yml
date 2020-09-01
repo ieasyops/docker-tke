@@ -1,0 +1,30 @@
+version: '3.7'
+
+networks:
+  traefik-net:
+    external: true
+
+services:
+
+  traefik:
+    image: traefik:v1.7.4
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+          - node.labels.tke.base == true
+    ports:
+      - '8080:80'
+      # - '8080:8080'
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+    networks:
+      - traefik-net
+    command:
+      - --docker
+      - --docker.swarmMode
+      - --docker.domain=traefik
+      - --docker.watch
+      - --api

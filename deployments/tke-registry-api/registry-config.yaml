@@ -1,0 +1,13 @@
+apiVersion: registry.config.tkestack.io/v1
+kind: RegistryConfiguration
+storage:
+  fileSystem:
+    rootDirectory: /etc/registry
+security:
+  # private key for signing registry JWT token, PKCS#1 encoded.
+  tokenPrivateKeyFile: keys/private_key.pem
+  tokenPublicKeyFile: keys/public.crt
+  adminPassword: secret
+  adminUsername: admin
+  httpSecret: secret
+defaultTenant: default

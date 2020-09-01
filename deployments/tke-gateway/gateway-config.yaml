@@ -1,0 +1,34 @@
+apiVersion: gateway.config.tkestack.io/v1
+kind: GatewayConfiguration
+components:
+  auth:
+    address: https://tkeauthapi:9451/oidc
+    passthrough:
+      caFile: /etc/ca/mkcert/rootCA.pem
+  platform:
+    address: https://tkeauthapi:9443
+    passthrough:
+      caFile: /etc/ca/mkcert/rootCA.pem
+  ### Optional Services ###
+  # TKE Registry
+  # registry:
+  #   address: https://127.0.0.1:9453
+  #   passthrough:
+  #     caFile: /etc/ca/mkcert/rootCA.pem
+  # TKE Business
+  # business:
+  #   address: https://127.0.0.1:9447
+  #   frontProxy:
+  #     caFile: /etc/ca/mkcert/rootCA.pem
+  #     clientCertFile: certificates/localhost+2-client.pem
+  #     clientKeyFile: certificates/localhost+2-client-key.pem
+  # TKE Monitor
+  # monitor:
+  #   address: https://127.0.0.1:9455
+  #   passthrough:
+  #     caFile: /etc/ca/mkcert/rootCA.pem
+  # TKE Notify
+  # notify:
+  #   address: https://127.0.0.1:9457
+  #   passthrough:
+  #         caFile: /etc/ca/mkcert/rootCA.pem
