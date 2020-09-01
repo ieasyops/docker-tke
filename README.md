@@ -23,9 +23,7 @@ docker node update --label-add=tke.base=true node
 5. 创建 overlay 网路, create network
 
 ```
-
 docker network create -d overlay traefik-net
-
 ```
 
 6. 启动 traefik

@@ -2,11 +2,11 @@ apiVersion: gateway.config.tkestack.io/v1
 kind: GatewayConfiguration
 components:
   auth:
-    address: https://tkeauthapi:9451/oidc
+    address: https://tke_tkeauthapi:9451/oidc
     passthrough:
       caFile: /etc/ca/mkcert/rootCA.pem
   platform:
-    address: https://tkeauthapi:9443
+    address: https://tke_tkeauthapi:9443
     passthrough:
       caFile: /etc/ca/mkcert/rootCA.pem
   ### Optional Services ###

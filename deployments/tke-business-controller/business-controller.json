@@ -1,7 +1,7 @@
 {
   "secure_serving": {
-    "tls_cert_file": "/etc/certificates/localhost+8.pem",
-    "tls_private_key_file": "/etc/certificates/localhost+8-key.pem"
+    "tls_cert_file": "/etc/certificates/${CA}",
+    "tls_private_key_file": "/etc/certificates/${CAKey}"
   },
   "client": {
     "platform": {

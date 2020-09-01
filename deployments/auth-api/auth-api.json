@@ -1,14 +1,10 @@
 {
-  "secure_serving": {
-    "tls_cert_file": "/etc/certificates/localhost+8.pem",
-    "tls_private_key_file": "/etc/certificates/localhost+8-key.pem"
-  },
   "authentication": {
     "token_auth_file": "/etc/token.csv",
     "privileged_username": "admin"
   },
   "generic": {
-    "external_hostname": "tkeauthapi",
+    "external_hostname": "localhost",
     "external_port": 9451
   },
   "auth": {
@@ -16,11 +12,9 @@
     "init_client_id": "client",
     "init_client_secret": "secret",
     "init_client_redirect_uris": [
-      "http://tkeauthapi:9442/callback",
       "http://tke_tkeauthapi:9442/callback",
       "http://127.0.0.1:9442/callback",
       "http://localhost:9442/callback",
-      "https://tkeauthapi:9441/callback",
       "https://tke_tkeauthapi:9441/callback",
       "https://127.0.0.1:9441/callback",
       "https://localhost:9441/callback"

@@ -13,10 +13,10 @@ configs:
     file: ./deployments/token.csv
   tke_auth_api_certificates_config:
     name: tke_auth_api_certificates_config_${CONFIG_VERSION:-0}
-    file: ./deployments/certificates/localhost+8.pem
+    file: ./deployments/certificates/${CA}
   tke_auth_api_certificates_tls_private_config:
     name: tke_auth_api_certificates_tls_private_config_${CONFIG_VERSION:-0}
-    file: ./deployments/certificates/localhost+8-key.pem
+    file: ./deployments/certificates/${CAKey}
 
   tke_auth_api_client_config:
     name: tke_auth_api_client_config_${CONFIG_VERSION:-0}
@@ -120,13 +120,15 @@ services:
   # tke-auth-api
   ######################################################
   tkeauthapi:
-    image: tkestack/tke-auth-api:v1.0.1.77.g069da4cb.dirty
+    image: tkestack/tke-auth-api:${IMAGES_VERSION}
     hostname: tkeauthapi
     command:
-      - '--etcd-servers=http://tke_etcd1:2379'
-      - '--config=/etc/auth/api/auth-api.json'
-      - '--tenant-admin=admin'
-      - '--tenant-admin-secret=/etc/token.csv'
+      - --etcd-servers=http://tke_etcd1:2379
+      - --config=/etc/auth/api/auth-api.json
+      - --tenant-admin=admin
+      - --tls-cert-file=/etc/certificates/${CA}
+      - --tls-private-key-file=/etc/certificates/${CAKey}
+      - --tenant-admin-secret=/etc/token.csv
     networks:
       - traefik-net
     ports:
@@ -153,12 +155,20 @@ services:
       placement:
         constraints:
           - node.labels.tke.base == true
+      labels:
+        - traefik.enable=true
+        - traefik.http.services.tkeauthapi-caoath-svc.loadbalancer.server.port=9441
+        - traefik.http.services.tkeauthapi-cert-svc.loadbalancer.server.port=9442
+        - traefik.http.services.tkeauthapi-issuer-svc.loadbalancer.server.port=9451
+
 
   tkeauthcontroller:
-    image: tkestack/tke-auth-controller:v1.0.1.77.g069da4cb.dirty
+    image: tkestack/tke-auth-controller:${IMAGES_VERSION}
     command:
-      - '--auth-api-server=https://tke_tkeauthapi:9451'
+      - '--auth-api-server=https://tkeauthapi:9451'
       - '--config=/etc/auth/apicontroller/auth-controller.json'
+      - --tls-cert-file=/etc/certificates/${CA}
+      - --tls-private-key-file=/etc/certificates/${CAKey}
     networks:
       - traefik-net
     environment:
@@ -183,10 +193,12 @@ services:
     
 
   tkeplatformapi:
-    image: tkestack/tke-platform-api:v1.0.1.77.g069da4cb.dirty
+    image: tkestack/tke-platform-api:${IMAGES_VERSION}
     command:
       - '--etcd-servers=http://tke_etcd1:2379'
       - '--config=/etc/platformapi/platform-api.json'
+      - --tls-cert-file=/etc/certificates/${CA}
+      - --tls-private-key-file=/etc/certificates/${CAKey}
     networks:
       - traefik-net
     ports:
@@ -219,6 +231,8 @@ services:
     hostname: tkeplatformcontroller
     command:
       - '--config=/etc/platformcontroller/platform-controller.json'
+      - --tls-cert-file=/etc/certificates/${CA}
+      - --tls-private-key-file=/etc/certificates/${CAKey}
     networks:
       - traefik-net
     configs:
@@ -240,10 +254,12 @@ services:
           - node.labels.tke.base == true
 
   tkegateway:
-    image: tkestack/tke-gateway:v1.0.1.77.g069da4cb.dirty
+    image: tkestack/tke-gateway:${IMAGES_VERSION}
     hostname: tkegateway
     command:
       - '--config=/etc/gateway/gateway.json'
+      - --tls-cert-file=/etc/certificates/${CA}
+      - --tls-private-key-file=/etc/certificates/${CAKey}
     networks:
       - traefik-net
     configs:
@@ -265,218 +281,223 @@ services:
         constraints:
           - node.labels.tke.base == true
 
-  tkeregistryapi:
-    image: tkestack/tke-registry-api:${IMAGES_VERSION}
-    hostname: tkeregistryapi
-    command:
-      - '--config=/etc/registry/registry-api.json'
-    networks:
-      - traefik-net
-    ports:
-      - "9447:9447"
-    configs:
-      - source: tke_auth_token_config
-        target: /etc/token.csv
-      - source: tke_registryapi_config
-        target: /etc/registry/registry-config.yaml
-      - source: tke_registryapi_json
-        target: /etc/registry/registry-api.json
-    volumes:
-      - ./deployments/ca/:/etc/ca/
-      - ./deployments/certificates/:/etc/certificates/
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-      placement:
-        constraints:
-          - node.labels.tke.base == true
-      labels: 
-        - traefik.enable=true
-        - traefik.http.services.tkeregistryapi-svc.loadbalancer.server.port=9447 
+#   tkeregistryapi:
+#     image: tkestack/tke-registry-api:${IMAGES_VERSION}
+#     hostname: tkeregistryapi
+#     command:
+#       - '--config=/etc/registry/registry-api.json'
+#     networks:
+#       - traefik-net
+#     ports:
+#       - "9447:9447"
+#     configs:
+#       - source: tke_auth_token_config
+#         target: /etc/token.csv
+#       - source: tke_registryapi_config
+#         target: /etc/registry/registry-config.yaml
+#       - source: tke_registryapi_json
+#         target: /etc/registry/registry-api.json
+#     volumes:
+#       - ./deployments/ca/:/etc/ca/
+#       - ./deployments/certificates/:/etc/certificates/
+#     deploy:
+#       replicas: 1
+#       restart_policy:
+#         condition: on-failure
+#       placement:
+#         constraints:
+#           - node.labels.tke.base == true
+#       labels: 
+#         - traefik.enable=true
+#         - traefik.http.services.tkeregistryapi-svc.loadbalancer.server.port=9447 
   
-  tkebusinessapi:
-    image: tkestack/tke-business-api:${IMAGES_VERSION}
-    hostname: tkebusinessapi
-    command:
-      - '--config=/etc/tkebusinessapi/business-api.json'
-    networks:
-      - traefik-net
-    configs:
-      - source: tke_auth_token_config
-        target: /etc/token.csv
-      - source: tke_businessapi_config
-        target: /etc/tkebusinessapi/business-api.json
-      - source: tke_platform_api_client_config
-        target: /etc/tkebusinessapi/platform-api-client-config.yaml
-    volumes:
-      - ./deployments/ca/:/etc/ca/
-      - ./deployments/certificates/:/etc/certificates/
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-      placement:
-        constraints:
-          - node.labels.tke.base == true 
+#   tkebusinessapi:
+#     image: tkestack/tke-business-api:${IMAGES_VERSION}
+#     hostname: tkebusinessapi
+#     command:
+#       - '--config=/etc/tkebusinessapi/business-api.json'
+#     networks:
+#       - traefik-net
+#     configs:
+#       - source: tke_auth_token_config
+#         target: /etc/token.csv
+#       - source: tke_businessapi_config
+#         target: /etc/tkebusinessapi/business-api.json
+#       - source: tke_platform_api_client_config
+#         target: /etc/tkebusinessapi/platform-api-client-config.yaml
+#     volumes:
+#       - ./deployments/ca/:/etc/ca/
+#       - ./deployments/certificates/:/etc/certificates/
+#     deploy:
+#       replicas: 1
+#       restart_policy:
+#         condition: on-failure
+#       placement:
+#         constraints:
+#           - node.labels.tke.base == true 
   
-  tkebusinesscontroller:
-    image: tkestack/tke-business-controller:${IMAGES_VERSION}
-    hostname: tkebusinesscontroller
-    command:
-      - '--config=/etc/tkebusinesscontroller/business-controller.json'
-    networks:
-      - traefik-net
-    configs:
-      - source: tke_businesscontroller_apiclient_config
-        target: /etc/tkebusinesscontroller/business-api-client-config.yaml
-      - source: tke_platform_api_client_config
-        target: /etc/tkebusinesscontroller/platform-api-client-config.yaml
-      - source: tke_businesscontroller_config
-        target: /etc/tkebusinesscontroller/business-controller.json
-    volumes:
-      - ./deployments/ca/:/etc/ca/
-      - ./deployments/certificates/:/etc/certificates/
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-      placement:
-        constraints:
-          - node.labels.tke.base == true
+#   tkebusinesscontroller:
+#     image: tkestack/tke-business-controller:${IMAGES_VERSION}
+#     hostname: tkebusinesscontroller
+#     command:
+#       - '--config=/etc/tkebusinesscontroller/business-controller.json'
+#     networks:
+#       - traefik-net
+#     configs:
+#       - source: tke_businesscontroller_apiclient_config
+#         target: /etc/tkebusinesscontroller/business-api-client-config.yaml
+#       - source: tke_platform_api_client_config
+#         target: /etc/tkebusinesscontroller/platform-api-client-config.yaml
+#       - source: tke_businesscontroller_config
+#         target: /etc/tkebusinesscontroller/business-controller.json
+#     volumes:
+#       - ./deployments/ca/:/etc/ca/
+#       - ./deployments/certificates/:/etc/certificates/
+#     deploy:
+#       replicas: 1
+#       restart_policy:
+#         condition: on-failure
+#       placement:
+#         constraints:
+#           - node.labels.tke.base == true
 
 
-## *******************************************************
-## *********** monitor begin***********************************
-  monitor_data:
-    image: influxdb:latest
-    hostname: influxdb
-    networks:
-      - traefik-net
-    ports:
-      - "8086:8086"
-    volumes:
-      - influxdb:/var/lib/influxdb
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-      placement:
-        constraints:
-          - node.labels.tke.base == true
-      labels: 
-        - traefik.enable=true
-        - traefik.http.services.monitor_data-svc.loadbalancer.server.port=8086 
+# ## *******************************************************
+# ## *********** monitor begin***********************************
+#   monitor_data:
+#     image: influxdb:latest
+#     hostname: influxdb
+#     networks:
+#       - traefik-net
+#     ports:
+#       - "8086:8086"
+#     volumes:
+#       - influxdb:/var/lib/influxdb
+#     deploy:
+#       replicas: 1
+#       restart_policy:
+#         condition: on-failure
+#       placement:
+#         constraints:
+#           - node.labels.tke.base == true
+#       labels: 
+#         - traefik.enable=true
+#         - traefik.http.services.monitor_data-svc.loadbalancer.server.port=8086 
   
-  tkemonitorapi:
-    image: tkestack/tke-monitor-api:${IMAGES_VERSION}
-    hostname: tkemonitorapi
-    command:
-      - '--config=/etc/monitor-api.json'
-    networks:
-      - traefik-net
-    configs:
-      - source: tke_auth_token_config
-        target: /etc/token.csv
-      - source: tke_monitorapi_config
-        target: /etc/monitor-api.json
-      - source: tke_platform_api_client_config
-        target: /etc/platform-api-client-config.yaml
-      - source: tke_monitor_api_config
-        target: /etc/monitor-config.yaml
-      - source: tke_monitor_api_client_config
-        target: /etc/monitor-api-client-config.yaml
-    volumes:
-      - ./deployments/ca/:/etc/ca/
-      - ./deployments/certificates/:/etc/certificates/
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-      placement:
-        constraints:
-          - node.labels.tke.base == true
+  # tkemonitorapi:
+  #   image: tkestack/tke-monitor-api:${IMAGES_VERSION}
+  #   hostname: tkemonitorapi
+  #   command:
+  #     - '--config=/etc/monitor-api.json'
+  #   networks:
+  #     - traefik-net
+  #   ports:
+  #     - 9455:9455
+  #   configs:
+  #     - source: tke_auth_token_config
+  #       target: /etc/token.csv
+  #     - source: tke_monitorapi_config
+  #       target: /etc/monitor-api.json
+  #     - source: tke_platform_api_client_config
+  #       target: /etc/platform-api-client-config.yaml
+  #     - source: tke_monitor_api_config
+  #       target: /etc/monitor-config.yaml
+  #     - source: tke_monitor_api_client_config
+  #       target: /etc/monitor-api-client-config.yaml
+  #   volumes:
+  #     - ./deployments/ca/:/etc/ca/
+  #     - ./deployments/certificates/:/etc/certificates/
+  #   deploy:
+  #     replicas: 1
+  #     restart_policy:
+  #       condition: on-failure
+  #     placement:
+  #       constraints:
+  #         - node.labels.tke.base == true
+  #     labels: 
+  #       - traefik.enable=true
+  #       - traefik.http.services.tkemonitorapi-svc.loadbalancer.server.port=9455
 
-  tkemonitorcontroller:
-    image: tke-monitor-controller:${IMAGES_VERSION}
-    hostname: tkemonitorcontroller
-    command:
-      - '--config=/etc/monitor-controller.json'
-    networks:
-      - traefik-net
-    configs:
-      - source: tke_monitor_api_client_config
-        target: /etc/monitor-api-client-config.yaml
-      - source: tke_businesscontroller_apiclient_config
-        target: /etc/business-api-client-config.yaml
-      - source: tke_monitor_api_config
-        target: /etc/monitor-config.yaml
-    volumes:
-      - ./deployments/ca/:/etc/ca/
-      - ./deployments/certificates/:/etc/certificates/
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-      placement:
-        constraints:
-          - node.labels.tke.base == true
+#   tkemonitorcontroller:
+#     image: tke-monitor-controller:${IMAGES_VERSION}
+#     hostname: tkemonitorcontroller
+#     command:
+#       - '--config=/etc/monitor-controller.json'
+#     networks:
+#       - traefik-net
+#     configs:
+#       - source: tke_monitor_api_client_config
+#         target: /etc/monitor-api-client-config.yaml
+#       - source: tke_businesscontroller_apiclient_config
+#         target: /etc/business-api-client-config.yaml
+#       - source: tke_monitor_api_config
+#         target: /etc/monitor-config.yaml
+#     volumes:
+#       - ./deployments/ca/:/etc/ca/
+#       - ./deployments/certificates/:/etc/certificates/
+#     deploy:
+#       replicas: 1
+#       restart_policy:
+#         condition: on-failure
+#       placement:
+#         constraints:
+#           - node.labels.tke.base == true
 
-  tkenotifyapi:
-    image: tkestack/tke-notify-api:${IMAGES_VERSION}
-    hostname: tkenotifyapi
-    command:
-      - '--config=/etc/notify-api.json'
-    ports:
-      - 9457:9457
-    networks:
-      - traefik-net
-    configs:
-      - source: tke_auth_token_config
-        target: /etc/token.csv
-      - source: tke_platform_api_client_config
-        target: /etc/platform-api-client-config.yaml
-      - source: tke_notify_api_config
-        target: /etc/notify-api.json
-    volumes:
-      - ./deployments/ca/:/etc/ca/
-      - ./deployments/certificates/:/etc/certificates/
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-      placement:
-        constraints:
-          - node.labels.tke.base == true     
-      labels: 
-        - traefik.enable=true
-        - traefik.http.services.tkenotifyapi-svc.loadbalancer.server.port=9457 
+#   tkenotifyapi:
+#     image: tkestack/tke-notify-api:${IMAGES_VERSION}
+#     hostname: tkenotifyapi
+#     command:
+#       - '--config=/etc/notify-api.json'
+#     ports:
+#       - 9457:9457
+#     networks:
+#       - traefik-net
+#     configs:
+#       - source: tke_auth_token_config
+#         target: /etc/token.csv
+#       - source: tke_platform_api_client_config
+#         target: /etc/platform-api-client-config.yaml
+#       - source: tke_notify_api_config
+#         target: /etc/notify-api.json
+#     volumes:
+#       - ./deployments/ca/:/etc/ca/
+#       - ./deployments/certificates/:/etc/certificates/
+#     deploy:
+#       replicas: 1
+#       restart_policy:
+#         condition: on-failure
+#       placement:
+#         constraints:
+#           - node.labels.tke.base == true     
+#       labels: 
+#         - traefik.enable=true
+#         - traefik.http.services.tkenotifyapi-svc.loadbalancer.server.port=9457 
 
-  tkenotifycontroller:
-    image: tkestack/tke-notify-controller:${IMAGES_VERSION}
-    hostname: tkenotifycontroller
-    command:
-      - '--config=/etc/notify-controller.json'
-    networks:
-      - traefik-net
-    configs:
-      - source: tke_auth_token_config
-        target: /etc/token.csv
-      - source: tke_platform_api_client_config
-        target: /etc/platform-api-client-config.yaml
-      - source: tke_notify_controller_config
-        target: /etc/notify-controller.json
-      - source: tke_notify_api_client_config
-        target: /etc/notify-api-client-config.yaml
-    volumes:
-      - ./deployments/ca/:/etc/ca/
-      - ./deployments/certificates/:/etc/certificates/
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-      placement:
-        constraints:
-          - node.labels.tke.base == true 
+#   tkenotifycontroller:
+#     image: tkestack/tke-notify-controller:${IMAGES_VERSION}
+#     hostname: tkenotifycontroller
+#     command:
+#       - '--config=/etc/notify-controller.json'
+#     networks:
+#       - traefik-net
+#     configs:
+#       - source: tke_auth_token_config
+#         target: /etc/token.csv
+#       - source: tke_platform_api_client_config
+#         target: /etc/platform-api-client-config.yaml
+#       - source: tke_notify_controller_config
+#         target: /etc/notify-controller.json
+#       - source: tke_notify_api_client_config
+#         target: /etc/notify-api-client-config.yaml
+#     volumes:
+#       - ./deployments/ca/:/etc/ca/
+#       - ./deployments/certificates/:/etc/certificates/
+#     deploy:
+#       replicas: 1
+#       restart_policy:
+#         condition: on-failure
+#       placement:
+#         constraints:
+#           - node.labels.tke.base == true 
 
 ## *********** monitor end***********************************

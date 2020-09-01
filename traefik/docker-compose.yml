@@ -7,24 +7,27 @@ networks:
 services:
 
   traefik:
-    image: traefik:v1.7.4
+    # The official v2 Traefik docker image
+    image: traefik:v2.2
+    # Enables the web UI and tells Traefik to listen to docker
+    command: 
+      - --api.insecure=true 
+      - --providers.docker.swarmMode=true
+      - --providers.docker.swarmModeRefreshSeconds=10
+
+    ports:
+      # The HTTP port
+      - "80:80"
+      # The Web UI (enabled by --api.insecure=true)
+      - "8080:8080"
+    networks:
+      - traefik-net
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
     deploy:
       placement:
         constraints:
           - node.role == manager
+      labels:
           - node.labels.tke.base == true
-    ports:
-      - '8080:80'
-      # - '8080:8080'
-    volumes:
-      - type: bind
-        source: /var/run/docker.sock
-        target: /var/run/docker.sock
-    networks:
-      - traefik-net
-    command:
-      - --docker
-      - --docker.swarmMode
-      - --docker.domain=traefik
-      - --docker.watch
-      - --api

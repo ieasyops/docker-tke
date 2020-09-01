@@ -4,7 +4,7 @@ clusters:
   - name: tke
     cluster:
       certificate-authority: /etc/ca/mkcert/rootCA.pem
-      server: https://127.0.0.1:9455
+      server: https://tke_tkemonitorapi:9455
 users:
   - name: admin
     user:

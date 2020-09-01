@@ -1,0 +1,2 @@
+#!/bin/bash
+mkcert localhost 127.0.0.1 tkeauthapi tkeauthcontroller tkeplatformapi tkeplatformcontroller tkegateway tkeregistryapi tkebusinessapi tkebusinesscontroller tkemonitorapi tkemonitorcontroller tkenotifyapi tkenotifycontroller tke_tkeauthapi tke_tkeauthcontroller tke_tkeplatformapi tke_tkeplatformcontroller tke_tkegateway tke_tkeregistryapi tke_tkebusinessapi tke_tkebusinesscontroller tke_tkemonitorapi tke_tkemonitorcontroller tke_tkenotifyapi tke_tkenotifycontroller ::1
